@@ -21,6 +21,14 @@ export class KartonElement extends HTMLElement {
   #state = {};
   #effects = [];
   #unsubscribers = [];
+  #renderPending = false;
+
+  #coerceAttr(value) {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    if (!isNaN(value)) return Number(value);
+    return value;
+  }
 
   constructor() {
     super();
@@ -31,8 +39,25 @@ export class KartonElement extends HTMLElement {
     // Light DOM by default
   }
 
+  initializePropsFromAttributes() {
+    for (const { name, value } of Array.from(this.attributes)) {
+      if ( name !== "id" && name !== "class" ) {
+        const coerced = this.#coerceAttr(value);
+        const [getter, setter] = this.busState(name, coerced);
+        //Object.defineProperty(this, name, {
+        //  configurable: true,
+        //  get: getter,
+        //  set: setter,
+        //});
+        this[`${name}`] = getter;
+        this[`set${name[0].toUpperCase() + name.slice(1)}`] = setter;
+      }
+    }
+  }
+
   connectedCallback() {
-    this.init();
+    this.initializePropsFromAttributes(); // auto-convert attributes to busState
+    this.init(); // user-defined
     this.render();
   }
 
@@ -47,10 +72,39 @@ export class KartonElement extends HTMLElement {
   }
 
   render() {
-    if (typeof this.template === 'function') {
-      uhtmlRender(this, this.template());
-    }
-    queueMicrotask(() => this.runEffects());
+    if (this.#renderPending) return;
+    this.#renderPending = true;
+
+    queueMicrotask(() => {
+      this.#renderPending = false;
+      if (typeof this.template === 'function') {
+        uhtmlRender(this, this.template());
+      }
+      this.runEffects();
+    });
+  }
+  
+  Computed(fn, deps = []) {
+    const resolvedDeps = deps.map(dep => {
+      if (typeof dep === 'function') return dep;
+      if (typeof dep === 'string') {
+        return () => {
+          const val = this[dep];
+          return typeof val === 'function' ? val() : val;
+        };
+      }
+      console.log('Invalid dependency in Computed!', dep);
+      return () => undefined;
+    });
+
+    let value;
+    const compute = () => {
+      value = fn();
+      this.render();
+    };
+
+    this.Effect(compute, resolvedDeps);
+    return () => value;
   }
 
   State(key, initialValue) {
@@ -76,19 +130,13 @@ export class KartonElement extends HTMLElement {
 
   #storageState(key, initialValue, storage) {
     if (!(key in this.#state)) {
-      try {
         const stored = storage.getItem(key);
-        this.#state[key] = stored !== null ? JSON.parse(stored) : initialValue;
-      } catch {
-        this.#state[key] = initialValue;
-      }
+        this.#state[key] = stored !== null ? this.#coerceAttr(stored) : initialValue;
     }
     const setState = (newVal) => {
       if (this.#state[key] !== newVal) {
         this.#state[key] = newVal;
-        try {
-          storage.setItem(key, JSON.stringify(newVal));
-        } catch {}
+        storage.setItem(key, newVal);
         this.render();
       }
     };
@@ -97,13 +145,8 @@ export class KartonElement extends HTMLElement {
 
   busState(key, initialValue, storage = localStorage) {
     if (!(key in this.#state)) {
-      try {
-        const stored = storage.getItem(key);
-        this.#state[key] = stored !== null ? JSON.parse(stored) : initialValue;
-      } catch {
-        this.#state[key] = initialValue;
-      }
-
+      const stored = storage.getItem(key);
+      this.#state[key] = stored !== null ? this.#coerceAttr(stored) : initialValue;
       const unsubscribe = stateBus.subscribe(key, val => {
         if (this.#state[key] !== val) {
           this.#state[key] = val;
@@ -117,9 +160,7 @@ export class KartonElement extends HTMLElement {
     const setState = (newVal) => {
       if (this.#state[key] !== newVal) {
         this.#state[key] = newVal;
-        try {
-          storage.setItem(key, JSON.stringify(newVal));
-        } catch {}
+        storage.setItem(key, newVal);
         stateBus.publish(key, newVal);
         this.render();
       }
