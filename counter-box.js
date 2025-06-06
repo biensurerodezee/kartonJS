@@ -1,12 +1,22 @@
 import { KartonElement, html } from './KartonElement.js';
 
 customElements.define('counter-box', class extends KartonElement {
-  init() {
-    // Set increase to 1 when the step attribute is not set
-    this.increase = this.step() ?? 1;
+  static get observedAttributes() {
+    return ['step', 'count', 'checked'];
+  }
 
-    // Count implemented in code?? Unnecessary, because all attributes (except "id" and "class") are automatically picked up as busState props.
-    // [this.count, this.setCount] = this.busState('count', 0);
+  init() {
+    // uncomment to disable automatic global style import
+    //this.globalStyleLinks = "";
+  
+    // Step busState with pub/sub
+    [this.step, this.setStep] = this.busState('step', 1);
+
+    // Count busState with pub/sub
+    [this.count, this.setCount] = this.busState('count', 0);
+    
+    // Checked busState with pub/sub with type boolean
+    [this.checked, this.setChecked] = this.busState('checked', true);
 
     // Computed value
     this.double = this.Computed(() => {
@@ -18,9 +28,7 @@ customElements.define('counter-box', class extends KartonElement {
     [this.checkedTotalDouble, this.setCheckedTotalDouble] = this.State('checkedTotalDouble', false);
 
     this.Effect(() => {
-      console.log(`'count' changed by '${this.increase}':`, this.count());
-      // reflect change in attribute
-      this.setAttribute("count", this.count());
+      console.log(`'count' changed by '${this.step()}':`, this.count());
     }, [this.count]);
 
     this.Effect(() => {
@@ -53,14 +61,24 @@ customElements.define('counter-box', class extends KartonElement {
     this.setCheckedTotalDouble(!this.checkedTotalDouble());
   }
 
+  resetCount() {
+    alert('reset: #' + this.id);
+    document.querySelector(`#${this.id}`).setAttribute('count', 0);
+  }
+
   template() {
     return html`
       <div>
-        <p>Count: ${this.count()}, Double: ${this.double()}</p>
-        <button @click=${() => this.setCount(this.count() + this.increase)}>calc</button>
+        <p>Count: ${this.count()} | Step size: ${this.step()}</p>
+        <button @click=${() => this.resetCount()}>reset</button>
+        <button @click=${() => this.setStep(this.step() - 1 )}>step -</button>
+        <button @click=${() => this.setCount(this.count() + this.step())}>calculate</button>
+        <button @click=${() => this.setStep(this.step() + 1 )}>step +</button>
         <button @click=${() => this.showAlertTotal()}>total</button>
         <button @click=${() => this.showAlertTotalDouble()}>totalDouble</button>
+        <button @click=${() => this.setChecked(!this.checked())}>check</button>
         *<slot></slot>*
+        <button onclick="window.__Karton__.instances.forEach(x => x.render())">Force re-render all</button>
       </div>
     `;
   }
