@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Benchmark KartonJS, Lit, FicusJS</title>
+    <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/npm/kartoncss/karton-element.svg" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/kartoncss/karton.css" type="text/css">
+    <script type="module" src="./KartonJS.js"></script>
+    <script type="module" src="./Lit.js"></script>
+    <script type="module" src="./FicusJS.js"></script>
+  </head>
+  <body>
+    <script>
+    const iterations = 2000;
+    </script>
+    
+    <h3>KartonJS</h3>
+    <script>
+    const start1 = performance.now();
+    for (let i = 0; i < iterations; i++) {
+      const el1 = document.createElement('karton-hello');
+      document.body.appendChild(el1);
+    }
+    const duration1 = performance.now() - start1;
+    console.log('Duration KartonJS: ', duration1.toFixed(2), 'ms');
+    document.write('Duration KartonJS: ', duration1.toFixed(2), 'ms');
+    </script>
+    <hr>
+    
+    <h3>Lit</h3>
+    <script>
+    const start2 = performance.now();
+    for (let i = 0; i < iterations; i++) {
+      const el2 = document.createElement('lit-hello');
+      document.body.appendChild(el2);
+    }
+    const duration2 = performance.now() - start2;
+    console.log('Duration Lit: ', duration2.toFixed(2), 'ms');
+    document.write('Duration Lit: ', duration2.toFixed(2), 'ms');
+    </script>
+    <hr>
+
+    <h3>FicusJS</h3>
+    <script>
+    const start3 = performance.now();
+    for (let i = 0; i < iterations; i++) {
+      const el3 = document.createElement('ficus-hello');
+      document.body.appendChild(el3);
+    }
+    const duration3 = performance.now() - start3;
+    console.log('Duration FicusJS: ', duration3.toFixed(2), 'ms');
+    document.write('Duration FicusJS: ', duration3.toFixed(2), 'ms');
+    </script>
+    <hr>
+  </body>
+</html>
+
+
+

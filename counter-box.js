@@ -1,86 +1,65 @@
-import { KartonElement, html } from './KartonElement.js';
+import { KartonElement, html, logdev } from './KartonElement.js';
 
 customElements.define('counter-box', class extends KartonElement {
+
   static get observedAttributes() {
-    return ['step', 'count', 'checked'];
+    return ['multiply'];
   }
+
+  iNum = 0;
 
   init() {
-    // uncomment to disable automatic global style import
-    //this.globalStyleLinks = "";
-  
-    // Step busState with pub/sub
-    [this.step, this.setStep] = this.busState('step', 1);
+    // uncomment to use localStorage instead of default memoryStorage for States
+    //this.Storage = localStorage; // or sessionStorage
 
-    // Count busState with pub/sub
-    [this.count, this.setCount] = this.busState('count', 0);
+    // step State (synchronizes with attribute 'step')
+    [this.step, this.setStep] = this.BusState('step', 1, localStorage);
+    // step State (synchronizes with attribute 'step')
+    [this.multiply, this.setMultiply] = this.State('multiply', 1, localStorage);
     
-    // Checked busState with pub/sub with type boolean
-    [this.checked, this.setChecked] = this.busState('checked', true);
+    // count State (synchronizes with attribute 'count')
+    [this.count, this.setCount] = this.State(`${this.id}:count`, 0);
+    this.SyncAttrEffect('count', this.count);
+    
+    // Checked BoolAttrEffect (true/false add/remove attribute 'checked')
+    [this.check, this.setCheck] = this.State(`${this.id}:check`, false);
+    this.BoolAttrEffect('checked', this.check);
+    
+    // Hide html ?attribute (true/false add/remove attribute 'hidden')
+    [this.hide, this.setHide] = this.State(`${this.id}:hide`, false);
 
     // Computed value
-    this.double = this.Computed(() => {
-      return this.count() * 2;
-    }, [this.count]);
-
-    // Local component-only state
-    [this.checkedTotal, this.setCheckedTotal] = this.State('checkedTotal', false);
-    [this.checkedTotalDouble, this.setCheckedTotalDouble] = this.State('checkedTotalDouble', false);
+    this.Compute = this.Computed(() => {
+      return this.count() * this.multiply()
+    }, [this.count, this.multiply]);
 
     this.Effect(() => {
-      console.log(`'count' changed by '${this.step()}':`, this.count());
-    }, [this.count]);
+      const iNum = ++this.iNum;
+      logdev(`[${this.id}] ⚙️ Effect starting for interval #${iNum}`);
 
-    this.Effect(() => {
-      console.log(`'checkedTotal' checked:`, this.checkedTotal());
-    }, [this.checkedTotal]);
+      const interval = setInterval(() =>
+        logdev(`[${this.id}] ⏱️ interval #${iNum} running`), 2000);
 
-    this.Effect(() => {
-      console.log(`'checkedTotalDouble' checked:`, this.checkedTotalDouble());
-    }, [this.checkedTotalDouble]);
-
-    this.Effect(() => {
-      const log = () => console.log(`Interval running with count: ${this.count()}`);
-      const id = setInterval(log, 2000);
       return () => {
-        console.log('Interval cleared');
-        clearInterval(id);
+        logdev(`[${this.id}] 🧹 Cleanup for interval #${iNum}`);
+        clearInterval(interval);
       };
-    }, [this.count]);
+    }, [this.check], 'check-interval');
 
-    console.log("this", this);
   }
-
-  showAlertTotal() {
-    alert('total: ' + this.count());
-    this.setCheckedTotal(!this.checkedTotal());
-  }
-
-  showAlertTotalDouble() {
-    alert('totalDouble: ' + this.double());
-    this.setCheckedTotalDouble(!this.checkedTotalDouble());
-  }
-
-  resetCount() {
-    alert('reset: #' + this.id);
-    document.querySelector(`#${this.id}`).setAttribute('count', 0);
-  }
-
+  
   template() {
     return html`
-      <div>
-        <p>Count: ${this.count()} | Step size: ${this.step()}</p>
-        <button @click=${() => this.resetCount()}>reset</button>
-        <button @click=${() => this.setStep(this.step() - 1 )}>step -</button>
-        <button @click=${() => this.setCount(this.count() + this.step())}>calculate</button>
-        <button @click=${() => this.setStep(this.step() + 1 )}>step +</button>
-        <button @click=${() => this.showAlertTotal()}>total</button>
-        <button @click=${() => this.showAlertTotalDouble()}>totalDouble</button>
-        <button @click=${() => this.setChecked(!this.checked())}>check</button>
-        *<slot></slot>*
-        <button onclick="window.__Karton__.instances.forEach(x => x.render())">Force re-render all</button>
-      </div>
+      <section>
+        <p ?hidden=${this.hide()}>Step: ${this.step()} | Count: ${this.count()} | Multiply: ${this.multiply()}</p>
+        <button @click=${() => this.setCount(0)}>reset</button>
+        <button @click=${() => this.setCount(this.count() + this.step())}>count</button>
+        <button @click=${() => alert('compute: ' + this.Compute())}>compute</button>
+        <button @click=${() => this.setCheck(!this.check())}>check</button>
+        <button @click=${() => this.setHide(!this.hide())}>hide</button>
+      </section>
     `;
   }
+
 });
 
