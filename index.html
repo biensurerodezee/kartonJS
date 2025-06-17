@@ -5,14 +5,18 @@
     <title>Karton Element</title>
     <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/npm/kartoncss/karton-element.svg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/kartoncss/karton.css" type="text/css">
-    <script type="module" src="./karton-app.js"></script>
+    <script type="module" src="./src/index.js"></script>
     <style>
       [checked] section { 
         background-color: gray;
       }
+      section {
+        scroll-margin-top: 8rem; /* So the section isn't flush with top */
+        padding: 1rem;
+      }
     </style>
   </head>
   <body>
-    <karton-app id="kartonapp1" title="Counter-Box" footnote="- By KartonJS -"></karton-app>
+    <karton-app id="kartonapp1" title="Karton Example" footnote="- By KartonJS -"></karton-app>
   </body>
 </html>

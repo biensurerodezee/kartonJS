@@ -1,9 +1,9 @@
-import { KartonElement, html, logdev } from './KartonElement.js';
+import { KartonElement, html, logdev } from '../../KartonElement.js';
 
 customElements.define('counter-box', class extends KartonElement {
 
   static get observedAttributes() {
-    return ['multiply'];
+    return ['step', 'multiply'];
   }
 
   iNum = 0;
@@ -13,9 +13,9 @@ customElements.define('counter-box', class extends KartonElement {
     //this.Storage = localStorage; // or sessionStorage
 
     // step State (synchronizes with attribute 'step')
-    [this.step, this.setStep] = this.BusState('step', 1, localStorage);
-    // step State (synchronizes with attribute 'step')
-    [this.multiply, this.setMultiply] = this.State('multiply', 1, localStorage);
+    [this.step, this.setStep] = this.BusState('step', 1);
+    // step State (synchronizes with attribute 'multiply')
+    [this.multiply, this.setMultiply] = this.State('multiply', 1);
     
     // count State (synchronizes with attribute 'count')
     [this.count, this.setCount] = this.State(`${this.id}:count`, 0);

@@ -8,8 +8,10 @@ const render = reactive(effect); // 🆕 replaces uhtmlRender
 export { html };
 
 // DEV env
-//export const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-export const isDev = false;
+export const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+//export const isDev = false;
+
+// logdev
 export const logdev = (...m) => (isDev) && console.debug(`[KartonJS]`, ...m);
 
 // memoryStorage 
@@ -19,7 +21,7 @@ export const memoryStorage = {
   getItem: (key) => memoryStorage.item[key] || null,
   removeItem: (key) => delete memoryStorage[key],
   clear: () => memoryStorage.item = {}
-}
+};
 
 // stateBus pub/sub - no export - only used within KartonElement
 const stateBus = (() => {
@@ -57,6 +59,36 @@ export class KartonElement extends HTMLElement {
     // optional: you can just use `this` since it's light DOM by default
   }
 
+  extractTemplateSlots(host = this) {
+    const slotMap = {};
+    const templates = host.querySelectorAll('template[slot]');
+    for (const tmpl of templates) {
+      const name = tmpl.getAttribute('slot');
+      const content = tmpl.content.cloneNode(true);
+      slotMap[name] = content;
+      tmpl.remove(); // Optional: remove templates so they don't render in DOM
+    }
+    
+    return slotMap;
+  }
+  
+  slot(name) {
+    return this.slots[name] || this.defaultContent[name] || "?? undefined slot ??";
+  }
+  
+  parseScriptConfig(host = this) {
+    const script = host.querySelector('script[type="application/json"]');
+    if (script) {
+      try {
+        return JSON.parse(script.textContent.trim());
+      } catch (e) {
+        logdev(`Failed to parse JSON script config within element <${host.tagName.toLowerCase()}>`, e);
+      }
+    } else {
+      return;
+    }
+  }
+
   connectedCallback() {
     // Define Development tools integration
     if (isDev) {
@@ -67,8 +99,10 @@ export class KartonElement extends HTMLElement {
 
       this.debugName = this.getAttribute('id') || this.tagName.toLowerCase();  
     }
+    
     // user-defined initialization
     this.init();
+    
     // render
     if (typeof this.template === 'function') {
       render(this, this.template.bind(this));
@@ -118,10 +152,9 @@ export class KartonElement extends HTMLElement {
       this.#state[key] = s;
 
       const cleanup = effect(() => {
-        const val = s.value;
-        logdev(`State Changed <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, val);
-        this.reflectAttribute(key, val);
-        storage.setItem(key, val);
+        logdev(`State Changed <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, s.value);
+        this.reflectAttribute(key, s.value);
+        storage.setItem(key, s.value);
       });
 
       this.#effects.push({ label: `state:${key}`, cleanup });
@@ -131,11 +164,22 @@ export class KartonElement extends HTMLElement {
     return [() => s.value, v => s.value = v];
   }
 
-  BusState(key, initialValue) {
+  BusState(key, initialValue, storage = this.Storage) {
     let s;
     const alreadyExists = key in this.#state;
     if (!alreadyExists) {
-      s = signal(initialValue);
+      let value;
+      if (this.hasAttribute(key)) {
+        value = this.coerce(this.getAttribute(key));
+        logdev(`State Initialized by Attribute <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, value);
+      } else if (storage.getItem(key) !== null) {
+        value = this.coerce(storage.getItem(key));
+        logdev(`State Initialized by Storage <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, value);
+      } else {
+        value = initialValue;
+        logdev(`State Initialized by Initial Value <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, value);
+      }
+      s = signal(value);
       this.#state[key] = s;
     } else {
       s = this.#state[key];
@@ -150,8 +194,11 @@ export class KartonElement extends HTMLElement {
     const hasEffect = this.#effects.some(e => e.label === `bus:${key}`);
     if (!hasEffect) {
       const cleanup = effect(() => {
+        logdev(`BusState Changed <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, s.value);
         logdev(`[${this.id}] PUB: ${key} =`, s.value);
         stateBus.publish(key, s.value);
+        this.reflectAttribute(key, s.value);
+        storage.setItem(key, s.value);
       });
       this.#effects.push({ label: `bus:${key}`, cleanup });
     }
