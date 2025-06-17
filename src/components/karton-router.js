@@ -1,5 +1,20 @@
 import { KartonElement, html, logdev } from '../../KartonElement.js';
 
+/*
+<!-- Example KartonRouter Configuration --> 
+<karton-router>
+  <script type="application/json">
+    [
+      { "path": "/", "component": "karton-home", "title": "Home - Karton App" },
+      { "path": "counter/:id", "component": "karton-counter", "title": "Counter" },
+      { "path": "settings/:section", "component": "karton-settings", "title": "Settings" },
+      { "path": "about/*", "component": "karton-about", "title": "About Us" },
+      { "path": "*", "component": "karton-notfound", "title": "Not Found" }
+    ]
+  </script>
+</karton-router>
+*/
+
 const router = {
   routes: [],
   fallback: null,
@@ -109,8 +124,6 @@ customElements.define('karton-router', class extends KartonElement {
   }
 
   init() {
-    this.id = "router";
-
     [this.route, this.setRoute] = this.BusState('route', location.pathname + location.search);
     [this.routeOut, this.setRouteOut] = this.State(null);
 

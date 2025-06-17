@@ -1,205 +1,272 @@
-# 🧱 KartonJS App
+# KartonJS
 
-A modern, minimalist web app built with KartonJS — a lightweight web component framework. This app features:
+`KartonJS` is a minimalist, reactive base class for building fast, maintainable Web Components.  
+It provides fine-grained reactive state, computed properties, effect hooks, and declarative attribute reflection — all powered by `uhtml` signals and reactive primitives.
 
-    💡 Declarative UI using tagged template literals
+---
 
-    🔁 Reactive State system
+## Table of Contents
 
-    🔗 Parameterized client-side routing
+- [Features](#features)  
+- [Installation](#installation)  
+- [Getting Started](#getting-started)  
+- [API](#api)  
+  - [`State`](#statekey-initialvalue-storage)  
+  - [`BusState`](#busstatekey-initialvalue-storage)  
+  - [`StateSignal`](#statesignalinitialvalue)  
+  - [`Computed`](#computedcomputefn-key)  
+  - [`Effect`](#effectfn-depsorlabel)  
+  - [`BoolAttrEffect`](#boolattreffectattr-getter)  
+  - [`SyncAttrEffect`](#syncattreffectattrname-getter)  
+- [Advanced Usage](#advanced-usage)  
+- [Development](#development)  
+- [Contributing](#contributing)  
+- [License](#license)  
 
-    🧩 Modular components (<karton-home>, <karton-counter>, etc.)
+---
 
-    ⚡ Fast navigation with no reloads
+## Features
+
+- **Reactive State** — easily create reactive properties linked to attributes and persistent storage.  
+- **Global Shared State** — via a built-in pub/sub Bus system for sync across components.  
+- **Computed Values** — derive reactive values from other reactive state.  
+- **Effect Hooks** — declarative side effects with automatic dependency tracking.  
+- **Attribute Reflection** — sync boolean and regular attributes with state seamlessly.  
+- **Lightweight & Minimal** — built on top of `uhtml`, no heavy dependencies.  
+- **Slots and Template Parsing** — support for content projection and JSON config parsing.  
+- **Works with Shadow or Light DOM** — flexible rendering strategies.
 
 ---
 
 ## Installation
 
-Install via npm:
+Install the dependency required by `KartonJS`:
 
 ```bash
 npm install kartonjs
+# or
+yarn add kartonjs
 ```
-Or use a CDN for quick experiments:
-```javascript
-<script type="module" src="https://cdn.jsdelivr.net/npm/kartonjs/dist/karton.js"></script>
+
+Then import `KartonElement` and extend it in your own components:
+
+```js
+import { KartonElement, html } from './KartonElement.js';
 ```
 
 ---
 
-## Basic Usage
+## Getting Started
 
-Create a custom element by extending KartonElement:
+Here is a simple counter component using `KartonElement`:
 
-import { KartonElement, html } from 'kartonjs';
+```js
+import { KartonElement, html } from './KartonElement.js';
 
-class MyElement extends KartonElement {
+class MyCounter extends KartonElement {
+  static observedAttributes = ['count'];
+
+  init() {
+    // Initialize reactive state 'count' with default 0
+    const [getCount, setCount] = this.State('count', 0);
+    this.getCount = getCount;
+    this.setCount = setCount;
+  }
+
   template() {
-    return html`<p>Hello KartonJS!</p>`;
+    return html\`
+      <div>
+        <p>Count: \${this.getCount()}</p>
+        <button @click=\${() => this.setCount(this.getCount() + 1)}>Increment</button>
+      </div>
+    \`;
   }
 }
 
-customElements.define('my-element', MyElement);
+customElements.define('my-counter', MyCounter);
+```
 
 Use it in HTML:
+
 ```html
-<my-element></my-element>
+<my-counter></my-counter>
 ```
 
 ---
 
+## API
 
-📁 Project Structure
+### `State(key, initialValue, storage = this.Storage)`
 
-.
-├── index.html
-├── src/
-│   ├── index.js                # Main app definition (`<karton-app>`)
-│   ├── KartonElement.js        # Core KartonJS library
-│   └── components/
-│       ├── karton-home.js
-│       ├── karton-counter.js
-│       ├── karton-settings.js
-│       ├── karton-about.js
-│       └── karton-notfound.js
+Creates a reactive state signal tied to a key.  
+- Initializes from attribute, then storage, then fallback to `initialValue`.  
+- Automatically reflects changes to attributes and storage.  
+- Returns `[getter, setter]` tuple.
 
-🚀 Getting Started
-Prerequisites
+```js
+const [getValue, setValue] = this.State('myKey', 'default');
+```
 
-No build step needed. Just serve with a local server (e.g. using VS Code Live Server, Python, or Vite).
-Example using Python
+---
 
-python3 -m http.server 8080
+### `BusState(key, initialValue, storage = this.Storage)`
 
-Then visit: http://localhost:8080
-## 🧠 Core Concepts
+Similar to `State()`, but state is shared globally across all components via a pub/sub bus.  
+Updates in one component sync across others.
 
-##🧩 KartonElement
+```js
+const [getShared, setShared] = this.BusState('sharedKey', 42);
+```
 
-Custom elements are defined by extending KartonElement. This class provides:
+---
 
-    State() for local reactive state
+### `StateSignal(initialValue)`
 
-    html for templating (based on uhtml)
+Creates a standalone reactive signal not tied to attribute or storage.
 
-    router for SPA-like navigation
+```js
+const [getVal, setVal] = this.StateSignal('hello');
+```
 
-    Optional localStorage/sessionStorage persistence
+---
 
-🔀 Routing
+### `Computed(computeFn, key)`
 
-KartonJS includes a lightweight router:
+Creates a computed reactive property derived from other signals.
 
-router.define({
-  '/': () => setRoute({ page: 'home', params: {} }),
-  '/counter/:id/:id2': (params) => setRoute({ page: 'counter', params }),
-  '/settings/:section': (params) => setRoute({ page: 'settings', params }),
-  '/about/:topic': (params) => setRoute({ page: 'about', params }),
-  '/wild/*rest': (params) => setRoute({ page: 'wild', params }),
-}, () => setRoute({ page: 'notfound', params: {} }));
+```js
+const getComputed = this.Computed(() => this.getCount() * 2, 'doubleCount');
+console.log(getComputed()); // reactive computed value
+```
 
-✅ Features:
+---
 
-    Supports multiple dynamic parameters (/counter/:id/:id2)
+### `Effect(fn, depsOrLabel)`
 
-    Named params passed to handler as object (params.id, params.section, etc.)
+Runs a side-effect function reactively, rerunning when dependencies change.
 
-    Wildcard support (*rest captures the rest of the path as a string)
+```js
+this.Effect(() => {
+  console.log('Count changed:', this.getCount());
+}, [this.getCount]);
+```
 
-    Automatic fallback to notfound
+---
 
-Navigation
+### `BoolAttrEffect(attr, getter)`
 
-Use:
+Reflects a boolean attribute based on the `getter` value.
 
-router.navigate('/counter/42/abc');
+```js
+this.BoolAttrEffect('disabled', () => this.getCount() > 5);
+```
 
-or bind to elements:
+---
 
-<button @click=${() => router.navigate('/about/us')}>About</button>
+### `SyncAttrEffect(attrName, getter)`
 
-🔄 Reactive State
+Reflects an attribute with a value returned by `getter`.
 
-[this.route, this.setRoute] = this.State('route', { page: 'home', params: {} });
+```js
+this.SyncAttrEffect('aria-label', () => \`Count is \${this.getCount()}\`);
+```
 
-State updates automatically trigger DOM re-render. State can be persisted:
+---
 
-this.Storage = localStorage; // or sessionStorage
+## Advanced Usage
 
-✨ Example: Main Component
+- Use `extractTemplateSlots()` to extract `<template slot="...">` content for flexible slot management.  
+```html
+<!-- Example KartonCard Configuration --> 
+<karton-card>
+  <template slot="header">🌟 My Header</template>
+  <template slot="main">
+    <div>
+      <p>Welcome to the beginning body!</p>
+      <p>Welcome to the main body!</p>
+      <p>Welcome to the end of the body!</p>
+    </div>
+  </template>
+  <template slot="footer">📎 Footer content</template>
+</karton-card>
+```
+[Example with Card](https://kartonjs.surge.sh/examples/card/)
 
-customElements.define('karton-app', class extends KartonElement {
+- Use `parseScriptConfig()` to parse embedded JSON configuration from a `<script type="application/json">` element inside your component.
+```html
+<!-- Example KartonRouter Configuration --> 
+<karton-router>
+  <script type="application/json">
+    [
+      { "path": "/", "component": "karton-home", "title": "Home - Karton App" },
+      { "path": "counter/:id", "component": "karton-counter", "title": "Counter" },
+      { "path": "settings/:section", "component": "karton-settings", "title": "Settings" },
+      { "path": "about/*", "component": "karton-about", "title": "About Us" },
+      { "path": "*", "component": "karton-notfound", "title": "Not Found" }
+    ]
+  </script>
+</karton-router>
+```
+[Example with Router](https://kartonjs.surge.sh/examples/router/)
+
+---
+
+## Development
+
+- The class logs debug info when served on localhost or 127.0.0.1.  
+- Dev logs can be enabled/disabled via the `isDev` flag.  
+- State is persisted by default in `memoryStorage`, but can be overridden.
+
+Like this:
+```js
+import { KartonElement, html, logdev, isDev, memoryStorage } from './KartonElement.js';
+
+class MyCounter extends KartonElement {
+  static observedAttributes = ['count'];
+
   init() {
-    [this.route, this.setRoute] = this.State('route', { page: 'home', params: {} });
+    // this changes the default State and BusState storage to localStorage
+    isDev && this.Storage = localStorage; // or sessionStorage // default is memoryStorage
+    
+    // log memoryStorage on non-dev env
+    !isDev && console.log(memoryStorage);
+    
 
-    router.define({
-      '/': () => this.setRoute({ page: 'home', params: {} }),
-      '/counter/:id/:id2': (params) => this.setRoute({ page: 'counter', params }),
-      '/settings/:section': (params) => this.setRoute({ page: 'settings', params }),
-      '/about/:topic': (params) => this.setRoute({ page: 'about', params }),
-      '/wild/*rest': (params) => this.setRoute({ page: 'wild', params }),
-    }, () => this.setRoute({ page: 'notfound', params: {} }));
+    
+    // Initialize reactive state 'count' with default 0
+    const [getCount, setCount] = this.State('count', 0);
+    // log on DEV only
+    logdev("Hello DEV this is the current count", getCount());
+    
+    this.getCount = getCount;
+    this.setCount = setCount;
+    
   }
 
   template() {
-    return html`
-      <nav>
-        <button @click=${() => router.navigate('/')}>Home</button>
-        <button @click=${() => router.navigate('/counter/123/xyz')}>Counter</button>
-        <button @click=${() => router.navigate('/settings/profile')}>Settings</button>
-        <button @click=${() => router.navigate('/about/contact')}>About</button>
-        <button @click=${() => router.navigate('/wild/anything/goes/here')}>Wildcard</button>
-      </nav>
-
-      <main>
-        ${this.route().page === 'home' ? html`<karton-home />` : ''}
-        ${this.route().page === 'counter' ? html`
-          <karton-counter id="${this.route().params.id}" id2="${this.route().params.id2}" />
-        ` : ''}
-        ${this.route().page === 'settings' ? html`
-          <karton-settings section="${this.route().params.section}" />
-        ` : ''}
-        ${this.route().page === 'about' ? html`
-          <karton-about topic="${this.route().params.topic}" />
-        ` : ''}
-        ${this.route().page === 'wild' ? html`
-          <div>Wildcard path: ${this.route().params.rest}</div>
-        ` : ''}
-        ${this.route().page === 'notfound' ? html`<karton-notfound />` : ''}
-      </main>
-    `;
+    return html\`
+      <div>
+        <p>Count: \${this.getCount()}</p>
+        <button @click=\${() => this.setCount(this.getCount() + 1)}>Increment</button>
+      </div>
+    \`;
   }
-});
+}
 
-🔧 Components
+customElements.define('my-counter', MyCounter);
+```
 
-Each component is a custom element extending KartonElement and defining a template().
+---
 
-Example:
+## Contributing
 
-customElements.define('karton-counter', class extends KartonElement {
-  template() {
-    return html`<h1>Counter Page - ID: ${this.getAttribute('id')}</h1>`;
-  }
-});
+Feel free to open issues or PRs on the repository.
 
-🛠 Development Tips
+---
 
-    Use browser DevTools + localStorage.clear() to reset app state
+## License
 
-    To debug route updates, log this.route() in template()
+MIT License
 
-    Define reusable State()s for global state if needed
+---
 
-📦 Deployment
-
-No build step required. You can host on any static file host like GitHub Pages, Netlify, Vercel.
-🧪 Testing
-
-Coming soon. You can use Vitest or plain JS DOM for unit testing custom elements.
-📄 License
-
-MIT — use freely, attribute where due.
-
-Let me know if you'd like a version with screenshots, example apps, or how to extend this architecture with plugins or global effects.

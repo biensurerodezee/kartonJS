@@ -23,7 +23,7 @@ customElements.define('karton-card', class extends KartonElement {
     // Content Defaults
     this.defaultContent = {
       header: document.createTextNode("header default"),
-      main: document.createElement('div').appendChild(document.createTextNode('-')).parentNode,
+      main: document.createElement('div').appendChild(document.createTextNode('main default')).parentNode,
       footer: document.createTextNode("footer default")
     };    
   }

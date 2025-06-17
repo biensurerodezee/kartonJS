@@ -26,6 +26,14 @@ describe('BusState', () => {
     expect(el2.shared()).toBe(1);
   });
 
+  it('does not trigger unnecessary updates if value stays the same', async () => {
+    const spy = vi.fn();
+    el1.Effect(spy, [el1.shared]);
+    el2.setShared(1); // same as initial
+    await Promise.resolve();
+    expect(spy).toHaveBeenCalledTimes(1); // only initial run
+  });
+
   it('syncs shared state between components', async () => {
     el1.setShared(99);
     await Promise.resolve();
@@ -36,14 +44,6 @@ describe('BusState', () => {
     el2.setShared(42);
     await Promise.resolve();
     expect(el1.shared()).toBe(42);
-  });
-
-  it('does not trigger unnecessary updates if value stays the same', async () => {
-    const spy = vi.fn();
-    el1.Effect(spy, [el1.shared]);
-    el2.setShared(1); // same as initial
-    await Promise.resolve();
-    expect(spy).toHaveBeenCalledTimes(1); // only initial run
   });
 
   it('removes bus listeners when disconnected', async () => {
