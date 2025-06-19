@@ -1,10 +1,10 @@
-import { KartonElement, html, isDev } from '../KartonElement.js';
-import './components/karton-home.js';
-import './components/karton-settings.js';
-import './components/karton-about.js';
-import './components/karton-notfound.js';
-import './components/karton-counter.js';
-import './components/karton-router.js';
+import { KartonElement, html, isDev } from '../../../KartonElement.js';
+import '../../../src/components/karton-home.js';
+import '../../../src/components/karton-settings.js';
+import '../../../src/components/karton-about.js';
+import '../../../src/components/karton-notfound.js';
+import '../../../src/components/karton-counter.js';
+import '../../../src/components/karton-router.js';
 
 customElements.define('karton-app', class extends KartonElement {
 
@@ -17,7 +17,6 @@ customElements.define('karton-app', class extends KartonElement {
     this.Effect(() => {
       document.body.className = this.colorTheme();
     }, [this.colorTheme], 'color-theme');
-
   }
 
   template() {
@@ -27,13 +26,13 @@ customElements.define('karton-app', class extends KartonElement {
       </header>
       <nav>
         <button @click=${() => this.setRoute('/')}>Home 🛖</button>
-        <a href="/counter/kc">Counter 🧮</a>
+        <a href="/examples/router/counter/kc">Counter 🧮</a>
         <button @click=${() => this.setRoute('/settings/info')}>Settings ℹ️</button>
-        <a href="/settings/color">Settings 🎨</a>
+        <a href="/examples/router/settings/color">Settings 🎨</a>
         <button @click=${() => document.querySelector("karton-router").setRoute("/about/us/and/some more")}>About 📄</button>
       </nav>
       <main>
-        <karton-router><!-- For no local a href preventDefault, add attribute: disable-router-links -->
+        <karton-router base-path="/examples/router"> <!-- For no local a href preventDefault, add attribute: disable-router-links -->
           <template slot="routes" type="application/json">
             [
               { "path": "/", "component": "karton-home", "title": "Home - Karton App" },

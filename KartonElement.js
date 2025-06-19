@@ -16,12 +16,18 @@ export const logdev = (...m) => (isDev) && console.debug(`[KartonJS]`, ...m);
 
 // memoryStorage 
 export const memoryStorage = {
-  item: {},
-  setItem: (key, value) => memoryStorage.item[key] = value,
-  getItem: (key) => memoryStorage.item[key] || null,
+  items: {},
+  setItem: (key, value) => memoryStorage.items[key] = value,
+  getItem: (key) => memoryStorage.items[key] || null,
   removeItem: (key) => delete memoryStorage[key],
-  clear: () => memoryStorage.item = {}
+  clear: () => memoryStorage.items = {}
 };
+
+// wait for requestAnimationFrame
+export async function sleepUntilAnimationFrame() { 
+  await new Promise(requestAnimationFrame);
+  return true;
+}
 
 // stateBus pub/sub - no export - only used within KartonElement
 const stateBus = (() => {
@@ -36,6 +42,9 @@ const stateBus = (() => {
     publish(key, value) {
       if (listeners.has(key)) {
         for (const cb of listeners.get(key)) cb(value);
+        return true;
+      } else {
+        return;
       }
     }
   };
@@ -49,6 +58,9 @@ export class KartonElement extends HTMLElement {
   #renderPending = false;
 
   Storage = memoryStorage;
+
+  $ = (s) => document.querySelector(s);  
+  $$ = (s) => document.querySelectorAll(s);
 
   constructor() {
     super();
@@ -64,8 +76,13 @@ export class KartonElement extends HTMLElement {
     const templates = host.querySelectorAll('template[slot]');
     for (const tmpl of templates) {
       const name = tmpl.getAttribute('slot');
-      const content = tmpl.content.cloneNode(true);
-      slotMap[name] = content;
+      const fragment = tmpl.content.cloneNode(true);
+      if( ["application/json", "json"].includes(tmpl.getAttribute('type')?.toLowerCase() || "") ) {
+        const rawContent = fragment.textContent;
+        slotMap[name] = this.safeJsonParse(rawContent);
+      } else {
+        slotMap[name] = fragment;
+      }
       tmpl.remove(); // Optional: remove templates so they don't render in DOM
     }
     
@@ -76,28 +93,25 @@ export class KartonElement extends HTMLElement {
     return this.slots[name] || this.defaultContent[name] || "?? undefined slot ??";
   }
   
-  parseScriptConfig(host = this) {
-    const script = host.querySelector('script[type="application/json"]');
-    if (script) {
+  safeJsonParse(json) {
       try {
-        return JSON.parse(script.textContent.trim());
+        return JSON.parse(json);
       } catch (e) {
-        logdev(`Failed to parse JSON script config within element <${host.tagName.toLowerCase()}>`, e);
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> Failed to parse JSON script config within element`, e);
+        return null;
       }
-    } else {
-      return;
-    }
   }
 
   connectedCallback() {
+    // Define i
+    this.i = this.id || "anonymous";
+  
     // Define Development tools integration
     if (isDev) {
       if (!window.__Karton__) {
         window.__Karton__ = { instances: new Set() };
       }
       window.__Karton__.instances.add(this);
-
-      this.debugName = this.getAttribute('id') || this.tagName.toLowerCase();  
     }
     
     // user-defined initialization
@@ -116,7 +130,7 @@ export class KartonElement extends HTMLElement {
     window.__Karton__?.instances.delete(this);
 
     for (const { label, cleanup } of this.#effects) {
-      logdev(`Cleaning up effect <${this.tagName.toLowerCase()} id=${this.id}>: ${label}`);
+      logdev(`<${this.tagName.toLowerCase()} id=${this.i}> Cleaning up effect: ${label}`);
       if (typeof cleanup === 'function') cleanup();
     }
     this.#effects = [];
@@ -138,23 +152,23 @@ export class KartonElement extends HTMLElement {
       let value;
 
       if (this.hasAttribute(key)) {
-        value = this.coerce(this.getAttribute(key));
-        logdev(`State Initialized by Attribute <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, value);
+        value = this.coerce(this.getAttribute(key)) || this.hasAttribute(key) && this.getAttribute(key) !== 'false';
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> State '${key}' initialized by getAttribute:`, value);
       } else if (storage.getItem(key) !== null) {
         value = this.coerce(storage.getItem(key));
-        logdev(`State Initialized by Storage <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, value);
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> State '${key}' initialized by Storage:`, value);
       } else {
         value = initialValue;
-        logdev(`State Initialized by Initial Value <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, value);
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> State '${key}' initialized by initialValue:`, value);
       }
 
       const s = signal(value);
       this.#state[key] = s;
 
       const cleanup = effect(() => {
-        logdev(`State Changed <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, s.value);
-        this.reflectAttribute(key, s.value);
-        storage.setItem(key, s.value);
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> State '${key}' changed: `, s.value);
+        this.reflectAttribute(key, s.value) && logdev(`attribute reflected '${key}':`, s.value);
+        storage.setItem(key, s.value) && logdev(`stored in Storage '${key}':`, s.value);
       });
 
       this.#effects.push({ label: `state:${key}`, cleanup });
@@ -170,14 +184,14 @@ export class KartonElement extends HTMLElement {
     if (!alreadyExists) {
       let value;
       if (this.hasAttribute(key)) {
-        value = this.coerce(this.getAttribute(key));
-        logdev(`State Initialized by Attribute <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, value);
+        value = this.coerce(this.getAttribute(key)) || this.hasAttribute(key) && this.getAttribute(key) !== 'false';
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> BusState '${key}' initialized by getAttribute:`, value);
       } else if (storage.getItem(key) !== null) {
         value = this.coerce(storage.getItem(key));
-        logdev(`State Initialized by Storage <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, value);
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> BusState '${key}' initialized by Storage:`, value);
       } else {
         value = initialValue;
-        logdev(`State Initialized by Initial Value <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, value);
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> BusState '${key}' initialized by initialValue:`, value);
       }
       s = signal(value);
       this.#state[key] = s;
@@ -194,11 +208,10 @@ export class KartonElement extends HTMLElement {
     const hasEffect = this.#effects.some(e => e.label === `bus:${key}`);
     if (!hasEffect) {
       const cleanup = effect(() => {
-        logdev(`BusState Changed <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, s.value);
-        logdev(`[${this.id}] PUB: ${key} =`, s.value);
-        stateBus.publish(key, s.value);
-        this.reflectAttribute(key, s.value);
-        storage.setItem(key, s.value);
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> BusState '${key}' changed:`, s.value);
+        stateBus.publish(key, s.value) && logdev(`PUB '${key}':`, s.value);
+        this.reflectAttribute(key, s.value) && logdev(`attribute reflected '${key}':`, s.value);
+        storage.setItem(key, s.value) && logdev(`stored in Storage '${key}':`, s.value);
       });
       this.#effects.push({ label: `bus:${key}`, cleanup });
     }
@@ -213,17 +226,18 @@ export class KartonElement extends HTMLElement {
 
   reflectAttribute(key, val) {
     let oAttr = this.constructor.observedAttributes || [];
-    if (oAttr.includes(key)) {
-      this.setAttribute(key, val);
-      logdev(`Attribute reflected: <${this.tagName.toLowerCase()} id=${this.id}> ${key} →`, val);
+    if (oAttr.includes(key) && val !== null) {
+      return this.setAttribute(key, val);
+    } else {
+      return;
     }
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
-    logdev(`attributeChanged ${name} <${this.tagName.toLowerCase()} id=${this.id}>:`, oldValue, '→', newValue);
+    logdev(`<${this.tagName.toLowerCase()} id=${this.i}> '${name}' attributeChanged:`, oldValue, '→', newValue);
 
-    const coerced = this.coerce(newValue);
+    const coerced = this.coerce(newValue) || this.hasAttribute(name) && this.getAttribute(name) !== 'false';
     if (name in this.#state && this.#state[name].value !== coerced) {
       this.#state[name].value = coerced;
       stateBus.publish(name, coerced);
@@ -241,7 +255,7 @@ export class KartonElement extends HTMLElement {
     }
 
     const run = () => {
-      logdev(`Effect Triggered <${this.tagName.toLowerCase()} id=${this.id}>: ${label}`);
+      logdev(`<${this.tagName.toLowerCase()} id=${this.i}> Effect Triggered: ${label}`);
       const result = fn();
       return typeof result === 'function' ? result : null;
     };
@@ -285,7 +299,7 @@ export class KartonElement extends HTMLElement {
 
       const cleanup = effect(() => {
         const val = c.value;
-        logdev(`Computed Updated <${this.tagName.toLowerCase()} id=${this.id}>: ${key} =`, val);
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> '${key}' computed updated:`, val);
       });
 
       this.#effects.push({ label: `computed:${key}`, cleanup });
@@ -300,8 +314,10 @@ export class KartonElement extends HTMLElement {
       const val = getter();
       if (val === false || val === null || val === undefined) {
         this.removeAttribute(attr);
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> attribute '${attr}' removed`);
       } else {
         this.setAttribute(attr, '');
+        logdev(`<${this.tagName.toLowerCase()} id=${this.i}> attribute '${attr}' added`);
       }
     }, [getter]);
   }

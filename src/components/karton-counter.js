@@ -45,7 +45,7 @@ customElements.define('karton-counter', class extends KartonElement {
         <button id="delcb3" onclick="document.querySelector('#cb3').remove();">delete cb3</button>
         <button @click="${() => { localStorage.clear(); } }">clear localStorage</button>
         <button @click=${() => this.resetCount() }>reset step</button>
-        ${isDev ? html`<button onclick="window.__Karton__.instances.forEach(x => console.log(x.debugName, x.template()))">log all Kartonlement templates</button>` : null}
+        ${isDev ? html`<button onclick="window.__Karton__.instances.forEach(x => console.log(x.tagName.toLowerCase(), x.i, x.template()))">log all KartonElement templates</button>` : null}
       </div>
     `;
   }

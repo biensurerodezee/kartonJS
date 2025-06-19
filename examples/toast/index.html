@@ -2,39 +2,38 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Karton Card</title>
+    <title>Karton Toast</title>
     <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/npm/kartoncss/karton-element.svg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/kartoncss/karton.css" type="text/css">
   </head>
   <body>
-    <karton-app id="kartoncardapp1" title="Karton Card Example" footnote="- By KartonJS -"></karton-app>
+    <karton-app id="kartontoastapp1" title="Karton Card Example" footnote="- By KartonJS -"></karton-app>
     
     <!-- inline example -->
     <script type="module">
     
       import { KartonElement, html } from '../../KartonElement.js';
 
-      import '../../src/components/karton-card.js'; // defines <karton-card /> 
+      import '../../src/components/karton-toast.js'; // defines <karton-toast /> 
 
       customElements.define('karton-app', class extends KartonElement {
 
+        init() {
+          requestAnimationFrame(() => {
+            kartonToast("Something happened!");
+            kartonToast("Success!", { type: "success" });
+            kartonToast("An error occurred!", { type: "error", duration: 5000 });
+          });
+        }
+
         template() {
           return html`
+            <karton-toast></karton-toast>
             <header>
               <h5>${this.getAttribute('title')}</h5>
             </header>
             <main>
-              <karton-card>
-                <template slot="header">🌟 My Header</template>
-                <template slot="main">
-                  <div>
-                    <p>Welcome to the beginning body!</p>
-                    <p>Welcome to the main body!</p>
-                    <p>Welcome to the end of the body!</p>
-                  </div>
-                </template>
-                <template slot="footer">📎 Footer content</template>
-              </karton-card>
+              <p>Welcome to Toast</p>
             </main>
             <footer>
               <div>${this.getAttribute('footnote')}</div>

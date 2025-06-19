@@ -28,6 +28,7 @@ describe('BusState', () => {
 
   it('does not trigger unnecessary updates if value stays the same', async () => {
     const spy = vi.fn();
+    spy.mockClear();
     el1.Effect(spy, [el1.shared]);
     el2.setShared(1); // same as initial
     await Promise.resolve();

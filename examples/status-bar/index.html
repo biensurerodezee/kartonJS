@@ -2,39 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Karton Card</title>
+    <title>Karton StatusBar</title>
     <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/npm/kartoncss/karton-element.svg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/kartoncss/karton.css" type="text/css">
   </head>
   <body>
-    <karton-app id="kartoncardapp1" title="Karton Card Example" footnote="- By KartonJS -"></karton-app>
+    <karton-app id="kartonstatusbarapp1" title="Karton StatusBar Example" footnote="- By KartonJS -"></karton-app>
     
     <!-- inline example -->
     <script type="module">
     
       import { KartonElement, html } from '../../KartonElement.js';
 
-      import '../../src/components/karton-card.js'; // defines <karton-card /> 
+      import '../../src/components/karton-status-bar.js'; // defines <karton-status-bar />
 
       customElements.define('karton-app', class extends KartonElement {
 
         template() {
           return html`
+            <karton-status-bar
+              text="Connected to Wi-Fi"
+              color="#4caf50"
+              height="30px"
+            ></karton-status-bar>
             <header>
               <h5>${this.getAttribute('title')}</h5>
             </header>
             <main>
-              <karton-card>
-                <template slot="header">🌟 My Header</template>
-                <template slot="main">
-                  <div>
-                    <p>Welcome to the beginning body!</p>
-                    <p>Welcome to the main body!</p>
-                    <p>Welcome to the end of the body!</p>
-                  </div>
-                </template>
-                <template slot="footer">📎 Footer content</template>
-              </karton-card>
+              <p>Welcome to KartonStatusBar!</p>
             </main>
             <footer>
               <div>${this.getAttribute('footnote')}</div>
@@ -43,6 +38,11 @@
         }
 
       });
+
+      setTimeout(() => {
+        alert('Hide the StatusBar');
+        document.querySelector("karton-status-bar").setHide(true);
+      }, 3000);
 
     </script>
   </body>

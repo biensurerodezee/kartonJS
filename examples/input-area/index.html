@@ -2,19 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Karton Card</title>
+    <title>Karton InputArea</title>
     <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/npm/kartoncss/karton-element.svg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/kartoncss/karton.css" type="text/css">
   </head>
   <body>
-    <karton-app id="kartoncardapp1" title="Karton Card Example" footnote="- By KartonJS -"></karton-app>
+    <karton-app id="kartoninputareaapp1" title="Karton InputArea Example" footnote="- By KartonJS -"></karton-app>
     
     <!-- inline example -->
     <script type="module">
     
       import { KartonElement, html } from '../../KartonElement.js';
 
-      import '../../src/components/karton-card.js'; // defines <karton-card /> 
+      import '../../src/components/karton-input-area.js'; // defines <karton-input-area /> 
 
       customElements.define('karton-app', class extends KartonElement {
 
@@ -24,17 +24,12 @@
               <h5>${this.getAttribute('title')}</h5>
             </header>
             <main>
-              <karton-card>
-                <template slot="header">🌟 My Header</template>
-                <template slot="main">
-                  <div>
-                    <p>Welcome to the beginning body!</p>
-                    <p>Welcome to the main body!</p>
-                    <p>Welcome to the end of the body!</p>
-                  </div>
-                </template>
-                <template slot="footer">📎 Footer content</template>
-              </karton-card>
+              <karton-input-area
+                id="inputMessage"
+                placeholder="Write your message here..."
+                value="Initial content"
+                rows="5"
+              ></karton-input-area>
             </main>
             <footer>
               <div>${this.getAttribute('footnote')}</div>
@@ -43,6 +38,12 @@
         }
 
       });
+
+      // echo message after 10 seconds
+      setTimeout(() => {
+        const inputMessage = document.querySelector('#inputMessage').value;
+        alert("Your input (after 10 seconds): " + inputMessage);
+      }, 10000);
 
     </script>
   </body>

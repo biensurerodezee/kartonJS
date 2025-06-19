@@ -1,7 +1,10 @@
 import { KartonElement, html } from '../../KartonElement.js';
 
 /*
-<!-- Example KartonCard Configuration --> 
+// 1. import
+import './components/karton-card.js';
+
+// 2. configure 
 <karton-card>
   <template slot="header">🌟 My Header</template>
   <template slot="main">
@@ -15,7 +18,7 @@ import { KartonElement, html } from '../../KartonElement.js';
 </karton-card>
 */
 
-customElements.define('karton-card', class extends KartonElement {
+export class KartonCard extends KartonElement {
   init() {
     // Extract slotted content just like native slots
     const slots = this.slots = this.extractTemplateSlots();
@@ -37,5 +40,7 @@ customElements.define('karton-card', class extends KartonElement {
       </div>
     `;
   }
-});
+}
+
+customElements.define('karton-card', KartonCard);
 

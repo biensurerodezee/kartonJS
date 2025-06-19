@@ -1,27 +1,17 @@
 import { KartonElement, html, logdev } from '../../KartonElement.js';
 
-/*
-<!-- Example KartonRouter Configuration --> 
-<karton-router>
-  <script type="application/json">
-    [
-      { "path": "/", "component": "karton-home", "title": "Home - Karton App" },
-      { "path": "counter/:id", "component": "karton-counter", "title": "Counter" },
-      { "path": "settings/:section", "component": "karton-settings", "title": "Settings" },
-      { "path": "about/*", "component": "karton-about", "title": "About Us" },
-      { "path": "*", "component": "karton-notfound", "title": "Not Found" }
-    ]
-  </script>
-</karton-router>
-*/
-
-const router = {
-  routes: [],
-  fallback: null,
-  setOutput: null,
+export class KartonRouter extends KartonElement {
+  routes = [];
+  fallback = null;
+  setOutput = null;
+  basePath = '';
 
   defineRoutes(routeTree, setOutputFn) {
     this.routes = [];
+    if (typeof setOutputFn !== 'function') {
+      console.error("No output function given to defineRoutes(routeTree, ...) second argument, the router can't show anything like this.");
+      return;
+    }
     this.setOutput = setOutputFn;
 
     const buildRoutes = (routes, parentPath = '') => {
@@ -61,14 +51,23 @@ const router = {
     buildRoutes(routeTree);
     window.addEventListener('popstate', () => this.resolve(location.pathname));
     this.resolve(location.pathname);
-  },
+  }
 
   navigate(path) {
-    history.pushState(null, '', path);
-    this.resolve(path);
-  },
+    const fullPath = path.startsWith(this.basePath)
+      ? path
+      : this.basePath + (path.startsWith('/') ? path : '/' + path);
+
+    history.pushState(null, '', fullPath);
+    this.resolve(fullPath);
+  }
 
   resolve(path) {
+    // Strip basePath for matching
+    if (this.basePath && path.startsWith(this.basePath)) {
+      path = path.slice(this.basePath.length) || '/';
+    }
+
     for (const route of this.routes) {
       const match = path.match(route.regex);
       if (match) {
@@ -80,8 +79,9 @@ const router = {
         return;
       }
     }
+
     if (this.fallback) this.render(this.fallback, {});
-  },
+  }
 
   render(tagName, params) {
     if (!this.setOutput) return;
@@ -91,14 +91,13 @@ const router = {
       el.setAttribute(key, value);
     }
 
-    // Optional: find matching route again to get the title
     const match = this.routes.find(r => r.component === tagName);
     if (match?.title) {
       document.title = match.title;
     }
 
     this.setOutput(el);
-  },
+  }
 
   enable() {
     document.addEventListener('click', e => {
@@ -111,43 +110,54 @@ const router = {
         e.button === 0
       ) {
         e.preventDefault();
-        this.navigate(a.pathname);
+
+        let path = a.pathname;
+        if (this.basePath && path.startsWith(this.basePath)) {
+          path = path.slice(this.basePath.length) || '/';
+        }
+
+        this.setRoute(path);
       }
     });
   }
-};
-
-customElements.define('karton-router', class extends KartonElement {
 
   static get observedAttributes() {
     return ['route'];
   }
 
   init() {
-    [this.route, this.setRoute] = this.BusState('route', location.pathname + location.search);
-    [this.routeOut, this.setRouteOut] = this.State(null);
-
-    // Navigation effect
-    this.Effect(() => {
-      logdev("Router Navigation Effect to: " + this.route());
-      router.navigate(this.route());
-    }, [this.route], 'route-navigate');
-
-    // Read embedded <script> for routes
-    const routes = this.parseScriptConfig();
-    if (routes) {
-        router.defineRoutes(routes, this.setRouteOut);
-    } else {
-      console.warn("No route config found inside <karton-router>");
+    // Normalize and read basePath
+    if (this.hasAttribute('base-path')) {
+      let bp = this.getAttribute('base-path').trim();
+      this.basePath = bp.endsWith('/') ? bp.slice(0, -1) : bp;
+      if (!this.basePath.startsWith('/')) this.basePath = '/' + this.basePath;
     }
 
-    router.enable();
-  }
+    [this.route, this.setRoute] = this.BusState('route', location.pathname + location.search);
+    [this.routeOut, this.setRouteOut] = this.State('routeOut');
 
+    this.Effect(() => {
+      logdev('Router Navigation to: ', this.route());
+      this.navigate(this.route());
+    }, [this.route], 'route-navigate');
+
+    const templateSlots = this.extractTemplateSlots();
+    if (templateSlots !== {} && 'routes' in templateSlots) {
+      this.defineRoutes(templateSlots.routes, this.setRouteOut);
+    } else {
+      console.warn('No route template config found inside <karton-router>');
+    }
+
+    if (!this.hasAttribute('disable-router-links')) {
+      this.enable();
+    } else {
+      logdev('disabled-router-links: local links will refresh page.');
+    }
+  }
 
   template() {
     return html`${this.routeOut()}`;
   }
-});
+}
 
-
+customElements.define('karton-router', KartonRouter);

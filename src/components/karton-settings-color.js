@@ -14,7 +14,7 @@ customElements.define('karton-settings-color', class extends KartonElement {
       document.querySelector('#colorThemeSelect').value = this.colorTheme();
       document.querySelector('#colorThemeSelect').setCustomValidity("Invalid field.");
     });
-    
+    //this.setColorTheme(document.querySelector('#colorThemeSelect').value)
   }
 
   template() {
