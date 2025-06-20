@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest --exclude backup/",
-    "deploy": "git add . --all && git commit -m new || true && git push && surge ./examples/router/ https://kartonjs.surge.sh && npm publish"
+    "deploy": "git add . --all && git commit -m new || true && git push && surge ./ https://kartonjs.surge.sh && npm publish"
   },
   "keywords": [
     "karton",
