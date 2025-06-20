@@ -9,11 +9,12 @@ export default defineConfig({
       entry: 'KartonElement.js',
       name: 'KartonJS',
       fileName: 'index',
-      formats: ['es']
+      formats: ['es', 'cjs']
     },
     minify: false,
-    outDir: '/',
-    sourcemap: true
+    outDir: '.',
+    sourcemap: true,
+    emptyOutDir: false
   }
 });
 

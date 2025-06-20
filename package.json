@@ -1,7 +1,7 @@
 {
   "name": "kartonjs",
   "version": "1.0.6",
-  "main": "KartonElement.js",
+  "main": "index.js",
   "scripts": {
     "dev": "vite",
     "test": "vitest --exclude backup/",
