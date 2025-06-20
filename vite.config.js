@@ -6,13 +6,13 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: 'src/index.js',
+      entry: 'KartonElement.js',
       name: 'KartonJS',
       fileName: 'index',
       formats: ['es']
     },
     minify: false,
-    outDir: 'dist',
+    outDir: '/',
     sourcemap: true
   }
 });

@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest --exclude backup/",
-    "deploy": "git add . --all && git commit -m new || true && git push && surge ./ && npm publish"
+    "deploy": "git add . --all && git commit -m new || true && git push && surge ./examples/router/ && npm publish"
   },
   "keywords": [
     "karton",

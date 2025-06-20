@@ -1,10 +1,24 @@
-# KartonJS
+# KartonJS 📦
 
 KartonJS is a lightweight, class-based Web Component framework with built-in reactive state, effects, computed values, and a slot-friendly templating system using uhtml.  
 Inspired by Lit but with a simpler mental model, it's ideal for building modern web apps without boilerplate.  
 
 
+## 📦 Exports
+
+- [kartonjs](https://cdn.jsdelivr.net/npm/kartonjs/KartonElement.js) as default { KartonElement, html, logdev, isDev }. `KartonElement` the element to extend for your webcomponents. `html` the uhtml literal function to generate templates to render. `logdev` a logdev("a message") for and on development. `isDev` a boolean rather you are on a local system or live.
+- [kartonjs/components/card](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-card) a card with slots in lightDOM.
+- [kartonjs/components/input-area](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-input-area) an input textarea wit the comfort of having a value property.
+- [kartonjs/components/status-bar](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-card) a status bar with custom message.
+- [kartonjs/components/toast](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-card) toasts fully configurable with slots.
+- [kartonjs/components/router](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-card) a router that gives you variables and wildcards, configures in JSON format.
+- [kartonjs/components/switch](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-card) a switch (show/hide) with equal router functionality, configures also in JSON format.
+
+
+ 
+
 ## 🚀 Getting Started
+
 1. Install
 
 Include via CDN:
@@ -16,18 +30,17 @@ import { KartonElement, html } 'https://cdn.jsdelivr.net/npm/kartonjs/KartonElem
 
 ```
 
-Or for dev:
-```html
-<script type="module">
-import { KartonElement, html, logdev, isDev  } 'https://cdn.jsdelivr.net/npm/kartonjs/KartonElement.js';
-</script>
-```
-
 Or use locally in a module project:
 
 ```bash
 npm install kartonjs
 ```
+
+There is also a npx command to skaffold a `kartonjs` project at once:
+```bash
+npx create-karton-app my-app
+```
+
 2. Create Your First Component
 
 ```js
@@ -45,6 +58,17 @@ class HelloWorld extends KartonElement {
 
 customElements.define('hello-world', HelloWorld);
 ```
+
+## 🪜 Examples
+
+- [examples/card/](https://kartonjs.surge.sh/examples/card) a card with slots in lightDOM.
+
+
+- [kartonjs/components/input-area](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-input-area) an input textarea wit the comfort of having a value property.
+- [kartonjs/components/status-bar](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-card) a status bar with custom message.
+- [kartonjs/components/toast](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-card) toasts fully configurable with slots.
+- [kartonjs/components/router](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-card) a router that gives you variables and wildcards, configures in JSON format.
+- [kartonjs/components/switch](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-card) a switch (show/hide) with equal router functionality, configures also in JSON
 
 ----------
 
