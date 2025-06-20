@@ -1,4 +1,4 @@
-import { KartonElement, html, isDev } from '../../KartonElement.js';
+import { KartonElement, html, isDev } from '../KartonElement.js';
 import './karton-card.js';
 
 customElements.define('karton-settings-color', class extends KartonElement {

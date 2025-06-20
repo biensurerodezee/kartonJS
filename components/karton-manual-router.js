@@ -1,4 +1,4 @@
-import { KartonElement, html, router, isDev } from '../../KartonElement.js';
+import { KartonElement, html, router, isDev } from '../KartonElement.js';
 import './karton-home.js';
 import './karton-settings.js';
 import './karton-about.js';

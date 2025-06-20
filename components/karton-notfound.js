@@ -1,4 +1,4 @@
-import { KartonElement, html } from '../../KartonElement.js';
+import { KartonElement, html } from '../KartonElement.js';
 
 customElements.define('karton-notfound', class extends KartonElement {
 

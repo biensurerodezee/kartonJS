@@ -1,19 +1,13 @@
-import { KartonElement, html, logdev } from '../../KartonElement.js';
+import { KartonElement, html, logdev } from '../KartonElement.js';
 
-export class KartonRouter extends KartonElement {
+export class KartonSwitch extends KartonElement {
   routes = [];
-  fallback = null;
-  setOutput = null;
+  route = null;
+  current = null;
+  instances = {};
   basePath = '';
 
-  defineRoutes(routeTree, setOutputFn) {
-    this.routes = [];
-    if (typeof setOutputFn !== 'function') {
-      console.error("No output function given to defineRoutes(routeTree, ...) second argument, the router can't show anything like this.");
-      return;
-    }
-    this.setOutput = setOutputFn;
-
+  defineRoutes(routeTree) {
     const buildRoutes = (routes, parentPath = '') => {
       for (const route of routes) {
         let fullPath = route.index
@@ -49,6 +43,17 @@ export class KartonRouter extends KartonElement {
     };
 
     buildRoutes(routeTree);
+
+    // Pre-instantiate and append once
+    for (const route of this.routes) {
+      if (!this.instances[route.component]) {
+        const el = document.createElement(route.component);
+        el.hidden = true;
+        this.instances[route.component] = el;
+        this.appendChild(el); // ✅ Append once
+      }
+    }
+
     window.addEventListener('popstate', () => this.resolve(location.pathname));
     this.resolve(location.pathname);
   }
@@ -63,7 +68,6 @@ export class KartonRouter extends KartonElement {
   }
 
   resolve(path) {
-    // Strip basePath for matching
     if (this.basePath && path.startsWith(this.basePath)) {
       path = path.slice(this.basePath.length) || '/';
     }
@@ -75,18 +79,23 @@ export class KartonRouter extends KartonElement {
         route.keys.forEach((key, i) => {
           params[key] = decodeURIComponent(match[i + 1] || '');
         });
-        this.render(route.component, params);
+
+        this.activate(route.component, params);
         return;
       }
     }
 
-    if (this.fallback) this.render(this.fallback, {});
+    console.warn('No matching route:', path);
   }
 
-  render(tagName, params) {
-    if (!this.setOutput) return;
+  activate(tagName, params) {
+    for (const [name, el] of Object.entries(this.instances)) {
+      el.hidden = name !== tagName;
+    }
 
-    const el = document.createElement(tagName);
+    const el = this.instances[tagName];
+    if (!el) return;
+
     for (const [key, value] of Object.entries(params)) {
       el.setAttribute(key, value);
     }
@@ -96,7 +105,7 @@ export class KartonRouter extends KartonElement {
       document.title = match.title;
     }
 
-    this.setOutput(el);
+    this.current = tagName;
   }
 
   enable() {
@@ -126,7 +135,6 @@ export class KartonRouter extends KartonElement {
   }
 
   init() {
-    // Normalize and read basePath
     if (this.hasAttribute('base-path')) {
       let bp = this.getAttribute('base-path').trim();
       this.basePath = bp.endsWith('/') ? bp.slice(0, -1) : bp;
@@ -134,30 +142,29 @@ export class KartonRouter extends KartonElement {
     }
 
     [this.route, this.setRoute] = this.BusState('route', location.pathname + location.search);
-    [this.routeOut, this.setRouteOut] = this.State('routeOut');
 
-    this.Effect(() => {
-      logdev('Router Navigation to: ', this.route());
-      this.navigate(this.route());
-    }, [this.route], 'route-navigate');
+    if (!this.hasAttribute('disable-switch-links')) {
+      this.enable();
+    }
 
     const templateSlots = this.extractTemplateSlots();
     if (templateSlots !== {} && 'routes' in templateSlots) {
-      this.defineRoutes(templateSlots.routes, this.setRouteOut);
+      this.defineRoutes(templateSlots.routes);
     } else {
-      console.warn('No route template config found inside <karton-router>');
+      console.warn('No route template config found inside <karton-switch>');
     }
 
-    if (!this.hasAttribute('disable-router-links')) {
-      this.enable();
-    } else {
-      logdev('disabled-router-links: local links will refresh page.');
-    }
+    this.Effect(() => {
+      logdev('Switch navigating to: ' + this.route());
+      this.navigate(this.route());
+    }, [this.route], 'karton-switch-navigate');
   }
 
-  template() {
-    return html`${this.routeOut()}`;
-  }
+  // ✅ Only runs once — no re-rendering!
+  //template() {
+  //  return html``;
+  //}
 }
 
-customElements.define('karton-router', KartonRouter);
+customElements.define('karton-switch', KartonSwitch);
+

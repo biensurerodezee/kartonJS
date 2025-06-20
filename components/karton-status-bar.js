@@ -1,4 +1,4 @@
-import { KartonElement, html } from '../../KartonElement.js';
+import { KartonElement, html } from '../KartonElement.js';
 
 export class KartonStatusBar extends KartonElement {
   static get observedAttributes() {

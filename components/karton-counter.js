@@ -1,4 +1,4 @@
-import { KartonElement, html, isDev } from '../../KartonElement.js';
+import { KartonElement, html, isDev } from '../KartonElement.js';
 import './counter-box.js';
 
 customElements.define('karton-counter', class extends KartonElement {

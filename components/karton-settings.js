@@ -1,4 +1,4 @@
-import { KartonElement, html } from '../../KartonElement.js';
+import { KartonElement, html } from '../KartonElement.js';
 import './karton-settings-info.js';
 import './karton-settings-color.js';
 

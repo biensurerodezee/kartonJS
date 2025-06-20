@@ -1,4 +1,4 @@
-import { KartonElement, html } from '../../KartonElement.js';
+import { KartonElement, html } from '../KartonElement.js';
 import './karton-card.js';
 
 customElements.define('karton-home', class extends KartonElement {

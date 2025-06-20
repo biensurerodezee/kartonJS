@@ -119,7 +119,11 @@ export class KartonElement extends HTMLElement {
     
     // render
     if (typeof this.template === 'function') {
-      render(this, this.template.bind(this));
+      try {
+        render(this, this.template.bind(this));
+      } catch (e) {
+        throw console.error("Error during rendering!\nPlease notice that KartonElement is using render() from 'uthml' and for example: class=\"button ${varname}\" is not allowed, only class=${varname}.\nTo know for sure that your template renders, please read: https://webreflection.github.io/uhtml/", e);
+      }
     }
   }
 

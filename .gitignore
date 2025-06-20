@@ -1,6 +1,10 @@
 # Backup
 backup/
 
+# Surge
+CNAME
+CORS
+
 # Logs
 logs
 *.log

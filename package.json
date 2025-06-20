@@ -1,11 +1,11 @@
 {
   "name": "kartonjs",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "KartonElement.js",
   "scripts": {
     "dev": "vite",
     "test": "vitest --exclude backup/",
-    "deploy": "git add . --all && git commit -m new || true && surge ./ && npm publish"
+    "deploy": "git add . --all && git commit -m new || true && git push && surge ./ && npm publish"
   },
   "keywords": [
     "karton",
