@@ -1,5 +1,5 @@
-import { effect, signal, computed } from 'uhtml/signal';
-import { reactive, html } from 'uhtml/reactive';
+import { effect, signal, computed } from 'https://cdn.jsdelivr.net/npm/uhtml@4.7.1/signal.js';
+import { reactive, html } from 'https://cdn.jsdelivr.net/npm/uhtml@4.7.1/reactive.js';
 
 // define Renderer
 const render = reactive(effect); // 🆕 replaces uhtmlRender

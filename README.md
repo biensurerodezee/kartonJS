@@ -6,7 +6,7 @@ Inspired by Lit but with a simpler mental model, it's ideal for building modern 
 
 ## 📦 Exports
 
-- [kartonjs](https://cdn.jsdelivr.net/npm/kartonjs/KartonElement.js) as default { KartonElement, html, logdev, isDev }. `KartonElement` the element to extend for your webcomponents. `html` the uhtml literal function to generate templates to render. `logdev` a logdev("a message") for and on development. `isDev` a boolean rather you are on a local system or live.
+- [kartonjs](https://cdn.jsdelivr.net/npm/kartonjs/index.js) as default { KartonElement, html, logdev, isDev }. `KartonElement` the element to extend for your webcomponents. `html` the uhtml literal function to generate templates to render. `logdev` a logdev("a message") for and on development. `isDev` a boolean rather you are on a local system or live.
 - [kartonjs/components/card](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-card) a card with slots in lightDOM.
 - [kartonjs/components/input-area](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-input-area) an input textarea wit the comfort of having a value property.
 - [kartonjs/components/status-bar](https://cdn.jsdelivr.net/npm/kartonjs/components/karton-card) a status bar with custom message.

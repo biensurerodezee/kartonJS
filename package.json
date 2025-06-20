@@ -1,7 +1,17 @@
 {
   "name": "kartonjs",
   "version": "1.0.7",
-  "main": "index.js",
+  "main": "KartonElement.js",
+  "exports": {
+    ".": "./KartonElement.js",
+    "./components/router": "./components/karton-router.js",
+    "./components/switch": "./components/karton-switch.js",
+    "./components/toast": "./components/karton-toast.js",
+    "./components/input-area": "./components/karton-input-area.js",
+    "./components/activity-indicator": "./components/karton-activity-indicator.js",
+    "./components/status-bar": "./components/karton-status-bar.js",
+    "./components/card": "./components/karton-card.js"
+  },
   "scripts": {
     "dev": "vite",
     "test": "vitest --exclude backup/",
